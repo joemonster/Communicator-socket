@@ -47,7 +47,10 @@ describe('/api/auth/login', () => {
 
     const cookies = res._getHeaders()['set-cookie'];
     expect(cookies).toBeDefined();
-    expect(cookies[0]).toContain('auth-token=mama');
+
+    // node-mocks-http może zwrócić string lub array
+    const cookieString = Array.isArray(cookies) ? cookies[0] : cookies;
+    expect(cookieString).toContain('auth-token=mama');
   });
 
   it('powinno zwrócić błąd przy niepoprawnym haśle', async () => {

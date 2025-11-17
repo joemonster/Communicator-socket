@@ -7,6 +7,8 @@
  * - Wysyłanie i odbieranie wiadomości
  * - Broadcast do wszystkich klientów
  * - Listę użytkowników online
+ *
+ * @jest-environment node
  */
 
 const { Server } = require('socket.io');
@@ -202,17 +204,14 @@ describe('Socket.io Integration', () => {
       }
     });
 
+    clientSocket2.on('connect', () => {
+      clientSocket2.emit('user:register', 'user2');
+    });
+
     clientSocket1.on('connect', () => {
       clientSocket1.emit('user:register', 'user1');
-
-      // Poczekaj chwilę, potem połącz drugiego klienta
-      setTimeout(() => {
-        clientSocket2.on('connect', () => {
-          clientSocket2.emit('user:register', 'user2');
-        });
-      }, 100);
     });
-  });
+  }, 10000);
 
   it('powinno usunąć użytkownika z listy online po rozłączeniu', (done) => {
     clientSocket1 = Client(`http://localhost:${PORT}`);
