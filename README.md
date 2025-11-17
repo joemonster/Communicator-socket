@@ -16,9 +16,10 @@ Prosta, atrakcyjna wizualnie aplikacja webowa do komunikacji między komputerami
 4. [Instalacja](#-instalacja)
 5. [Uruchomienie](#-uruchomienie)
 6. [Dostęp z innych urządzeń](#-dostęp-z-innych-urządzeń)
-7. [Konfiguracja](#-konfiguracja)
-8. [Jak działa Socket.io](#-jak-działa-socketio)
-9. [Rozbudowa](#-rozbudowa)
+7. [Testy](#-testy)
+8. [Konfiguracja](#-konfiguracja)
+9. [Jak działa Socket.io](#-jak-działa-socketio)
+10. [Rozbudowa](#-rozbudowa)
 
 ---
 
@@ -165,6 +166,56 @@ http://192.168.0.10:3000
 ### 3. Gotowe! 🎉
 
 Teraz możesz zalogować się i czatować z różnych urządzeń w domu.
+
+---
+
+## 🧪 Testy
+
+Aplikacja posiada kompletny zestaw testów jednostkowych i integracyjnych.
+
+### Uruchomienie testów:
+
+```bash
+# Wszystkie testy z pokryciem kodu
+npm test
+
+# Tryb watch (ciągłe testowanie)
+npm run test:watch
+
+# Tylko testy jednostkowe
+npm run test:unit
+
+# Tylko testy integracyjne
+npm run test:integration
+```
+
+### Co jest testowane?
+
+✅ **Logika biznesowa** (lib/)
+- usersConfig.js - walidacja użytkowników, hasła
+- messageRepository.js - historia wiadomości, limity
+
+✅ **API Routes**
+- /api/auth/login - logowanie, błędy, cookie
+- /api/auth/me - sesje, autoryzacja
+
+✅ **Komponenty React**
+- LoginPage - kafelki, formularze, przekierowania
+
+✅ **Socket.io**
+- Połączenia WebSocket
+- Broadcast wiadomości
+- Lista użytkowników online
+
+### Dokumentacja testów:
+
+Pełny przewodnik testowania: **[TESTING.md](TESTING.md)**
+
+**Pokrycie kodu:**
+- Branches: ≥50%
+- Functions: ≥50%
+- Lines: ≥50%
+- Statements: ≥50%
 
 ---
 
