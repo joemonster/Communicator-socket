@@ -19,13 +19,14 @@
 
 /* Górny pasek */
 .header {
-  background: white;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
   padding: 15px 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   z-index: 10;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .headerLeft {
@@ -48,6 +49,16 @@
 .statusOnline {
   color: #4caf50;
   font-weight: 600;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .statusOffline {
@@ -133,6 +144,19 @@
   color: #4caf50;
   font-size: 1.2rem;
   line-height: 1;
+  animation: userDotPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(76, 175, 80, 0.6));
+}
+
+@keyframes userDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
 }
 
 /* Obszar czatu */
@@ -203,13 +227,24 @@
   border-radius: 18px;
   position: relative;
   word-wrap: break-word;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.messageBubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .bubbleOwn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.bubbleOwn:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .bubbleOther {
@@ -286,10 +321,31 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efekt ripple przy kliknięciu */
+.sendButton::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.sendButton:active::after {
+  width: 300px;
+  height: 300px;
 }
 
 .sendButton:hover:not(:disabled) {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
