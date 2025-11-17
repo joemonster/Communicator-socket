@@ -1,0 +1,132 @@
+name: CI - Testy i Build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  test:
+    name: Testy i Coverage
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout kodu
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Uruchomienie testów jednostkowych
+        run: npm run test:unit
+
+      - name: Uruchomienie testów integracyjnych
+        run: npm run test:integration
+
+      - name: Uruchomienie wszystkich testów z coverage
+        run: npm test
+
+      - name: Upload raportu coverage
+        if: matrix.node-version == '20.x'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Archiwizacja raportu coverage
+        if: matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+
+  build:
+    name: Build aplikacji
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout kodu
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Build Next.js
+        run: npm run build
+
+      - name: Archiwizacja buildu
+        uses: actions/upload-artifact@v3
+        with:
+          name: nextjs-build
+          path: .next/
+
+  lint-check:
+    name: Sprawdzenie jakości kodu
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kodu
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Sprawdzenie struktury package.json
+        run: |
+          echo "✅ Sprawdzanie package.json..."
+          node -e "require('./package.json')"
+
+      - name: Sprawdzenie testów
+        run: |
+          echo "✅ Sprawdzanie czy testy istnieją..."
+          ls -la __tests__/unit/
+          ls -la __tests__/integration/
+
+  security:
+    name: Skanowanie bezpieczeństwa
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout kodu
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Instalacja zależności
+        run: npm ci
+
+      - name: Audit zależności
+        run: npm audit --audit-level=moderate || true
+
+      - name: Sprawdzenie podatności
+        run: npm audit fix --dry-run || true

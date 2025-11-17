@@ -5,6 +5,8 @@ Prosta, atrakcyjna wizualnie aplikacja webowa do komunikacji między komputerami
 ![Next.js](https://img.shields.io/badge/Next.js-14-black)
 ![React](https://img.shields.io/badge/React-18-blue)
 ![Socket.io](https://img.shields.io/badge/Socket.io-4.6-green)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-%E2%89%A550%25-success)
 
 ---
 

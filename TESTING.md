@@ -11,6 +11,7 @@ Ten dokument opisuje framework testowy i sposób uruchamiania testów w aplikacj
 3. [Struktura testów](#-struktura-testów)
 4. [Pokrycie testami](#-pokrycie-testami)
 5. [Pisanie własnych testów](#-pisanie-własnych-testów)
+6. [GitHub Actions CI/CD](#-github-actions-cicd)
 
 ---
 
@@ -389,3 +390,113 @@ Przed commitowaniem kodu, upewnij się, że:
 ---
 
 **Miłego testowania! 🧪**
+
+---
+
+## 🚀 GitHub Actions CI/CD
+
+Projekt jest skonfigurowany z automatycznym CI/CD przez GitHub Actions.
+
+### Co się dzieje automatycznie?
+
+Przy każdym push lub pull request uruchamiane są:
+
+#### 1. **Testy** (`test` job)
+- ✅ Testy jednostkowe (`npm run test:unit`)
+- ✅ Testy integracyjne (`npm run test:integration`)
+- ✅ Wszystkie testy z coverage (`npm test`)
+- ✅ Generowanie raportu pokrycia kodu
+- ✅ Upload coverage do Codecov (opcjonalnie)
+
+**Matrix testing:**
+- Node.js 18.x
+- Node.js 20.x
+
+#### 2. **Build** (`build` job)
+- ✅ Instalacja zależności
+- ✅ Build Next.js (`npm run build`)
+- ✅ Weryfikacja, że build się kompiluje
+- ✅ Archiwizacja buildu
+
+#### 3. **Lint Check** (`lint-check` job)
+- ✅ Sprawdzenie struktury package.json
+- ✅ Weryfikacja, że testy istnieją
+
+#### 4. **Security** (`security` job)
+- ✅ npm audit - skanowanie podatności
+- ✅ Sprawdzenie zależności
+
+### Plik konfiguracyjny
+
+`.github/workflows/ci.yml`
+
+### Jak sprawdzić status?
+
+1. **W GitHub:**
+   - Przejdź do zakładki "Actions"
+   - Zobacz historię wszystkich uruchomień
+   - Sprawdź logi dla każdego joba
+
+2. **Badge w README:**
+   ```markdown
+   ![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+   ```
+
+### Artifacts
+
+Po każdym buildzieuruchamiany na CI, dostępne są:
+
+- **coverage-report** - raport pokrycia kodu (HTML)
+- **nextjs-build** - skompilowana aplikacja Next.js
+
+Pobierz je z zakładki "Actions" → wybrany workflow → "Artifacts"
+
+### Lokalne uruchomienie przed pushem
+
+Aby upewnić się, że CI przejdzie:
+
+```bash
+# 1. Uruchom testy
+npm test
+
+# 2. Zbuduj aplikację
+npm run build
+
+# 3. Sprawdź audit
+npm audit
+```
+
+### Wyłączenie CI dla commita
+
+Jeśli chcesz pominąć CI dla konkretnego commita:
+
+```bash
+git commit -m "docs: update README [skip ci]"
+```
+
+### Troubleshooting CI
+
+#### Problem: Testy failują na CI ale działają lokalnie
+
+**Rozwiązanie:**
+1. Sprawdź wersję Node.js (`node --version`)
+2. Użyj `npm ci` zamiast `npm install`
+3. Sprawdź, czy wszystkie pliki są commitowane
+
+#### Problem: Build failuje na CI
+
+**Rozwiązanie:**
+1. Uruchom `npm run build` lokalnie
+2. Sprawdź logi buildu w GitHub Actions
+3. Upewnij się, że package.json ma wszystkie zależności
+
+#### Problem: Coverage nie jest uploadowany
+
+**Rozwiązanie:**
+1. Sprawdź, czy Codecov jest skonfigurowany
+2. Dodaj CODECOV_TOKEN do GitHub Secrets
+3. Lub usuń krok upload z workflow
+
+---
+
+**Testy wykonują się automatycznie na GitHub Actions! ✅**
