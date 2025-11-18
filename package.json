@@ -12,12 +12,16 @@
     "test:integration": "jest --testPathPattern=__tests__/integration"
   },
   "dependencies": {
+    "better-sqlite3": "^12.4.1",
     "cookie": "^0.6.0",
+    "idb": "^8.0.3",
+    "multer": "^2.0.2",
     "next": "^14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "socket.io": "^4.6.1",
-    "socket.io-client": "^4.6.1"
+    "socket.io-client": "^4.6.1",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",

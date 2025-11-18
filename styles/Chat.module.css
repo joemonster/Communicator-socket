@@ -630,3 +630,194 @@
   justify-content: flex-start;
   margin-left: 12px;
 }
+
+/* ============================================
+   IMAGE UPLOAD & PREVIEW
+   ============================================ */
+
+.imageButton {
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: #f0f2f5;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imageButton:hover:not(:disabled) {
+  background: #e4e6eb;
+  transform: scale(1.1);
+}
+
+.imageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.imagePreview {
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.imagePreview img {
+  max-width: 200px;
+  max-height: 150px;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imagePreviewActions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancelImageButton,
+.sendImageButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelImageButton {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.cancelImageButton:hover:not(:disabled) {
+  background: #d0d0d0;
+}
+
+.sendImageButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.sendImageButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.sendImageButton:disabled,
+.cancelImageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Message image styling */
+.bubbleImage {
+  padding: 8px;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.messageImage {
+  cursor: pointer;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.messageImage:hover {
+  transform: scale(1.02);
+}
+
+.messageImage img {
+  max-width: 300px;
+  max-height: 400px;
+  display: block;
+  border-radius: 12px;
+}
+
+/* ============================================
+   LIGHTBOX
+   ============================================ */
+
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+  animation: fadeIn 0.2s ease;
+}
+
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightboxClose:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* ============================================
+   LOAD OLDER MESSAGES
+   ============================================ */
+
+.loadOlderWrapper {
+  display: flex;
+  justify-content: center;
+  padding: 15px;
+}
+
+.loadOlderButton {
+  padding: 8px 20px;
+  background: #f0f2f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loadOlderButton:hover:not(:disabled) {
+  background: #e4e6eb;
+  color: #333;
+}
+
+.loadOlderButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

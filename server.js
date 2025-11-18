@@ -15,7 +15,8 @@ const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
 const { getUserById } = require('./lib/usersConfig');
-const { getAllMessages, addMessage, addReaction } = require('./lib/messageRepository');
+const { getAllMessages, addMessage, addReaction, getOlderMessages, hasOlderMessages } = require('./lib/messageRepository');
+const { initDatabase, startCleanupScheduler } = require('./lib/database');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0'; // Nasłuchuj na wszystkich interfejsach (dostęp z sieci lokalnej)
@@ -26,6 +27,12 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
+  // Inicjalizacja bazy danych SQLite
+  initDatabase();
+
+  // Uruchom periodyczne czyszczenie starych danych
+  startCleanupScheduler();
+
   const httpServer = createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
@@ -88,7 +95,7 @@ app.prepare().then(() => {
     });
 
     /**
-     * Obsługa nowej wiadomości
+     * Obsługa nowej wiadomości (tekst lub obrazek)
      */
     socket.on('chat:message', (data) => {
       const user = connectedUsers.get(socket.id);
@@ -103,16 +110,48 @@ app.prepare().then(() => {
         const message = addMessage({
           userId: user.userId,
           userName: user.userName,
-          text: data.text
+          text: data.text || null,
+          attachmentId: data.attachmentId || null
         });
 
-        console.log(`💬 Wiadomość od ${user.userName}: ${data.text}`);
+        if (data.attachmentId) {
+          console.log(`📷 Obrazek od ${user.userName}`);
+        } else {
+          console.log(`💬 Wiadomość od ${user.userName}: ${data.text}`);
+        }
 
         // Rozgłoś wiadomość do wszystkich klientów
         io.emit('chat:message', message);
       } catch (err) {
         console.error('Błąd obsługi wiadomości:', err);
         socket.emit('error', { message: 'Nie udało się wysłać wiadomości' });
+      }
+    });
+
+    /**
+     * Obsługa ładowania starszych wiadomości
+     */
+    socket.on('chat:loadOlder', (data) => {
+      const user = connectedUsers.get(socket.id);
+
+      if (!user) {
+        socket.emit('error', { message: 'Nie jesteś zalogowany' });
+        return;
+      }
+
+      try {
+        const olderMessages = getOlderMessages(data.beforeDate, data.limit || 50);
+        const hasMore = olderMessages.length > 0 && hasOlderMessages(olderMessages[0]?.createdAt);
+
+        socket.emit('chat:olderMessages', {
+          messages: olderMessages,
+          hasMore
+        });
+
+        console.log(`📜 Załadowano ${olderMessages.length} starszych wiadomości dla ${user.userName}`);
+      } catch (err) {
+        console.error('Błąd ładowania starszych wiadomości:', err);
+        socket.emit('error', { message: 'Nie udało się załadować starszych wiadomości' });
       }
     });
 

@@ -10,6 +10,8 @@
  * - Typing indicator - "Mama pisze..."
  * - Browser notifications - powiadomienia systemowe
  * - Message reactions - reakcje na wiadomości
+ * - Image upload - wysyłanie obrazków
+ * - Load older messages - ładowanie starszych wiadomości
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -45,9 +47,17 @@ export default function ChatPage() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [typingUsers, setTypingUsers] = useState([]);
   const [activeReactionMenu, setActiveReactionMenu] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [hasOlderMessages, setHasOlderMessages] = useState(true);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const messagesEndRef = useRef(null);
   const audioRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const previousMessagesCount = useRef(0);
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
@@ -145,14 +155,24 @@ export default function ChatPage() {
 
         if (message.userId !== userId && prev.length > 0) {
           playNotificationSound();
+          const notificationText = message.type === 'image'
+            ? 'wysłał obrazek'
+            : message.text?.substring(0, 100) || '';
           showBrowserNotification(
             `${message.userName}`,
-            message.text.substring(0, 100)
+            notificationText
           );
         }
 
         return newMessages;
       });
+    });
+
+    // Obsługa starszych wiadomości
+    socket.on('chat:olderMessages', (data) => {
+      setMessages((prev) => [...data.messages, ...prev]);
+      setHasOlderMessages(data.hasMore);
+      setLoadingOlder(false);
     });
 
     socket.on('users:online', (users) => {
@@ -268,6 +288,95 @@ export default function ChatPage() {
       });
     }
     setActiveReactionMenu(null);
+  }
+
+  // Obsługa wyboru obrazka
+  function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Sprawdź typ pliku
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Dozwolone tylko obrazki: JPG, PNG, GIF, WebP');
+      return;
+    }
+
+    // Sprawdź rozmiar (25 MB)
+    if (file.size > 25 * 1024 * 1024) {
+      alert('Maksymalny rozmiar pliku to 25 MB');
+      return;
+    }
+
+    setSelectedImage(file);
+
+    // Utwórz preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Anuluj wybór obrazka
+  function cancelImageSelection() {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+  // Wyślij obrazek
+  async function handleSendImage() {
+    if (!selectedImage || !isConnected || uploading) return;
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', selectedImage);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Wyślij wiadomość z załącznikiem
+        const socket = getSocket();
+        if (socket) {
+          socket.emit('chat:message', {
+            attachmentId: data.attachment.id
+          });
+        }
+
+        cancelImageSelection();
+      } else {
+        alert(data.error || 'Błąd podczas wysyłania obrazka');
+      }
+    } catch (err) {
+      console.error('Błąd uploadu:', err);
+      alert('Nie udało się wysłać obrazka');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  // Załaduj starsze wiadomości
+  function loadOlderMessages() {
+    if (loadingOlder || !hasOlderMessages || messages.length === 0) return;
+
+    setLoadingOlder(true);
+    const socket = getSocket();
+    if (socket) {
+      socket.emit('chat:loadOlder', {
+        beforeDate: messages[0].createdAt,
+        limit: 50
+      });
+    }
   }
 
   // Scroll do ostatniej wiadomości
@@ -402,7 +511,20 @@ export default function ChatPage() {
         {/* Obszar czatu */}
         <div className={styles.chatArea}>
           {/* Lista wiadomości */}
-          <div className={styles.messagesContainer}>
+          <div className={styles.messagesContainer} ref={messagesContainerRef}>
+            {/* Przycisk ładowania starszych wiadomości */}
+            {hasOlderMessages && messages.length > 0 && (
+              <div className={styles.loadOlderWrapper}>
+                <button
+                  className={styles.loadOlderButton}
+                  onClick={loadOlderMessages}
+                  disabled={loadingOlder}
+                >
+                  {loadingOlder ? 'Ładowanie...' : 'Załaduj starsze wiadomości'}
+                </button>
+              </div>
+            )}
+
             {messages.length === 0 ? (
               <div className={styles.emptyState}>
                 <p>👋 Brak wiadomości. Wyślij pierwszą wiadomość!</p>
@@ -425,9 +547,23 @@ export default function ChatPage() {
                     <div
                       className={`${styles.messageBubble} ${
                         isOwn ? styles.bubbleOwn : styles.bubbleOther
-                      }`}
+                      } ${message.type === 'image' ? styles.bubbleImage : ''}`}
                     >
-                      <div className={styles.messageText}>{message.text}</div>
+                      {/* Treść wiadomości - tekst lub obrazek */}
+                      {message.type === 'image' && message.attachment ? (
+                        <div
+                          className={styles.messageImage}
+                          onClick={() => setLightboxImage(`/api/attachments/${message.attachment.id}`)}
+                        >
+                          <img
+                            src={`/api/attachments/${message.attachment.id}`}
+                            alt={message.attachment.originalName}
+                            loading="lazy"
+                          />
+                        </div>
+                      ) : (
+                        <div className={styles.messageText}>{message.text}</div>
+                      )}
                       <div className={styles.messageTime}>
                         {formatRelativeTime(message.createdAt)}
                       </div>
@@ -482,6 +618,31 @@ export default function ChatPage() {
             </div>
           )}
 
+          {/* Preview wybranego obrazka */}
+          {imagePreview && (
+            <div className={styles.imagePreview}>
+              <img src={imagePreview} alt="Preview" />
+              <div className={styles.imagePreviewActions}>
+                <button
+                  type="button"
+                  className={styles.cancelImageButton}
+                  onClick={cancelImageSelection}
+                  disabled={uploading}
+                >
+                  Anuluj
+                </button>
+                <button
+                  type="button"
+                  className={styles.sendImageButton}
+                  onClick={handleSendImage}
+                  disabled={uploading}
+                >
+                  {uploading ? 'Wysyłanie...' : 'Wyślij obrazek'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Pole do wpisywania wiadomości */}
           <form onSubmit={handleSendMessage} className={styles.inputForm}>
             {/* Emoji picker */}
@@ -510,6 +671,24 @@ export default function ChatPage() {
               )}
             </div>
 
+            {/* Przycisk dodawania obrazka */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageSelect}
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              style={{ display: 'none' }}
+            />
+            <button
+              type="button"
+              className={styles.imageButton}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!isConnected || uploading}
+              title="Dodaj obrazek"
+            >
+              📷
+            </button>
+
             <input
               type="text"
               value={inputText}
@@ -528,6 +707,16 @@ export default function ChatPage() {
           </form>
         </div>
       </div>
+
+      {/* Lightbox dla pełnego rozmiaru obrazka */}
+      {lightboxImage && (
+        <div className={styles.lightbox} onClick={() => setLightboxImage(null)}>
+          <button className={styles.lightboxClose} onClick={() => setLightboxImage(null)}>
+            ✕
+          </button>
+          <img src={lightboxImage} alt="Powiększony obrazek" />
+        </div>
+      )}
     </div>
   );
 }
