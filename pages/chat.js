@@ -63,6 +63,7 @@ export default function ChatPage() {
   const typingTimeoutRef = useRef(null);
   const isTypingRef = useRef(false);
   const emojiPickerRef = useRef(null);
+  const isInitialLoad = useRef(true);
 
   // Sprawdź sesję i inicjalizuj socket przy załadowaniu
   useEffect(() => {
@@ -91,7 +92,10 @@ export default function ChatPage() {
 
   // Auto-scroll do ostatniej wiadomości
   useEffect(() => {
-    scrollToBottom();
+    if (messages.length > 0) {
+      scrollToBottom(isInitialLoad.current);
+      isInitialLoad.current = false;
+    }
   }, [messages]);
 
   // Poproś o zgodę na powiadomienia
@@ -381,8 +385,10 @@ export default function ChatPage() {
   }
 
   // Scroll do ostatniej wiadomości
-  function scrollToBottom() {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  function scrollToBottom(instant = false) {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: instant ? 'instant' : 'smooth'
+    });
   }
 
   // Odtwórz dźwięk powiadomienia
