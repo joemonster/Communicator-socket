@@ -147,6 +147,7 @@ describe('LoginPage', () => {
       })
     });
 
+    const user = userEvent.setup();
     render(<LoginPage />);
 
     await waitFor(() => {
@@ -154,7 +155,7 @@ describe('LoginPage', () => {
     });
 
     // Kliknij użytkownika
-    fireEvent.click(screen.getByText('Mama').closest('button'));
+    await user.click(screen.getByText('Mama').closest('button'));
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Wpisz hasło/i)).toBeInTheDocument();
@@ -162,7 +163,7 @@ describe('LoginPage', () => {
 
     // Wpisz hasło
     const passwordInput = screen.getByPlaceholderText(/Wpisz hasło/i);
-    await userEvent.type(passwordInput, 'zle-haslo');
+    await user.type(passwordInput, 'zle-haslo');
 
     // Mock API /api/auth/login - błędne hasło
     fetch.mockResolvedValueOnce({
@@ -174,7 +175,7 @@ describe('LoginPage', () => {
     });
 
     // Kliknij Zaloguj
-    fireEvent.click(screen.getByText('Zaloguj'));
+    await user.click(screen.getByText('Zaloguj'));
 
     // Sprawdź, czy pojawił się komunikat błędu
     await waitFor(() => {
@@ -201,6 +202,7 @@ describe('LoginPage', () => {
       })
     });
 
+    const user = userEvent.setup();
     render(<LoginPage />);
 
     await waitFor(() => {
@@ -208,7 +210,7 @@ describe('LoginPage', () => {
     });
 
     // Kliknij użytkownika
-    fireEvent.click(screen.getByText('Mama').closest('button'));
+    await user.click(screen.getByText('Mama').closest('button'));
 
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/Wpisz hasło/i)).toBeInTheDocument();
@@ -216,7 +218,7 @@ describe('LoginPage', () => {
 
     // Wpisz hasło
     const passwordInput = screen.getByPlaceholderText(/Wpisz hasło/i);
-    await userEvent.type(passwordInput, 'mama123');
+    await user.type(passwordInput, 'mama123');
 
     // Mock API /api/auth/login - sukces
     fetch.mockResolvedValueOnce({
@@ -228,7 +230,7 @@ describe('LoginPage', () => {
     });
 
     // Kliknij Zaloguj
-    fireEvent.click(screen.getByText('Zaloguj'));
+    await user.click(screen.getByText('Zaloguj'));
 
     // Sprawdź przekierowanie do /chat
     await waitFor(() => {
