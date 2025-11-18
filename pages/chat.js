@@ -53,6 +53,7 @@ export default function ChatPage() {
   const [hasOlderMessages, setHasOlderMessages] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [reactionMenuPosition, setReactionMenuPosition] = useState('top'); // 'top' lub 'bottom'
 
   const messagesEndRef = useRef(null);
   const audioRef = useRef(null);
@@ -512,6 +513,7 @@ export default function ChatPage() {
         <div className={styles.chatArea}>
           {/* Lista wiadomości */}
           <div className={styles.messagesContainer} ref={messagesContainerRef}>
+            <div className={styles.messagesInner}>
             {/* Przycisk ładowania starszych wiadomości */}
             {hasOlderMessages && messages.length > 0 && (
               <div className={styles.loadOlderWrapper}>
@@ -568,30 +570,40 @@ export default function ChatPage() {
                         {formatRelativeTime(message.createdAt)}
                       </div>
 
-                      {/* Przycisk reakcji */}
-                      <button
-                        className={styles.reactionButton}
-                        onClick={() => setActiveReactionMenu(
-                          activeReactionMenu === message.id ? null : message.id
-                        )}
-                      >
-                        😊
-                      </button>
+                      {/* Kontener przycisku reakcji i menu */}
+                      <div className={styles.reactionButtonWrapper}>
+                        <button
+                          className={styles.reactionButton}
+                          onClick={(e) => {
+                            if (activeReactionMenu === message.id) {
+                              setActiveReactionMenu(null);
+                            } else {
+                              // Sprawdź pozycję przycisku względem viewportu
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              // Jeśli przycisk jest bliżej niż 100px od góry, pokaż menu poniżej
+                              setReactionMenuPosition(rect.top < 100 ? 'bottom' : 'top');
+                              setActiveReactionMenu(message.id);
+                            }
+                          }}
+                        >
+                          😊
+                        </button>
 
-                      {/* Menu reakcji */}
-                      {activeReactionMenu === message.id && (
-                        <div className={styles.reactionMenu}>
-                          {REACTION_EMOJIS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              className={styles.reactionOption}
-                              onClick={() => handleAddReaction(message.id, emoji)}
-                            >
-                              {emoji}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                        {/* Menu reakcji */}
+                        {activeReactionMenu === message.id && (
+                          <div className={`${styles.reactionMenu} ${reactionMenuPosition === 'bottom' ? styles.reactionMenuBottom : ''}`}>
+                            {REACTION_EMOJIS.map((emoji) => (
+                              <button
+                                key={emoji}
+                                className={styles.reactionOption}
+                                onClick={() => handleAddReaction(message.id, emoji)}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Wyświetl reakcje */}
@@ -601,6 +613,7 @@ export default function ChatPage() {
               })
             )}
             <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Wskaźnik pisania */}
