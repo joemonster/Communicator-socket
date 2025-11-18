@@ -11,7 +11,8 @@
 const {
   getAllMessages,
   addMessage,
-  clearAllMessages
+  clearAllMessages,
+  addAttachment
 } = require('../../lib/messageRepository');
 
 describe('messageRepository', () => {
@@ -127,13 +128,33 @@ describe('messageRepository', () => {
       }).toThrow('Nieprawidłowa struktura wiadomości');
     });
 
-    it('powinno rzucić błąd przy braku text', () => {
+    it('powinno rzucić błąd przy braku text i attachmentId', () => {
       expect(() => {
         addMessage({
           userId: 'mama',
           userName: 'Mama'
         });
-      }).toThrow('Nieprawidłowa struktura wiadomości');
+      }).toThrow('Wiadomość musi zawierać tekst lub załącznik');
+    });
+
+    it('powinno dodać wiadomość z obrazkiem bez tekstu', () => {
+      // Najpierw dodaj załącznik
+      const attachment = addAttachment({
+        filename: 'test-image.jpg',
+        originalName: 'test.jpg',
+        mimeType: 'image/jpeg',
+        size: 1024
+      });
+
+      const message = addMessage({
+        userId: 'mama',
+        userName: 'Mama',
+        text: '',
+        attachmentId: attachment.id
+      });
+
+      expect(message).toBeDefined();
+      expect(message.attachmentId).toBe(attachment.id);
     });
 
     it('powinno dodać wiadomość do historii', () => {
@@ -187,10 +208,10 @@ describe('messageRepository', () => {
     });
   });
 
-  describe('Limit wiadomości', () => {
-    it('powinno ograniczyć historię do 1000 wiadomości', () => {
-      // Dodaj 1010 wiadomości
-      for (let i = 0; i < 1010; i++) {
+  describe('Przechowywanie wiadomości', () => {
+    it('powinno przechowywać wszystkie wiadomości (retencja oparta na dacie)', () => {
+      // Dodaj 100 wiadomości
+      for (let i = 0; i < 100; i++) {
         addMessage({
           userId: 'test',
           userName: 'Test',
@@ -200,14 +221,11 @@ describe('messageRepository', () => {
 
       const messages = getAllMessages();
 
-      // Powinno zostać tylko ostatnie 1000
-      expect(messages.length).toBeLessThanOrEqual(1000);
-
-      // Pierwsza wiadomość powinna być #10 (0-9 zostało usuniętych)
-      if (messages.length === 1000) {
-        expect(messages[0].text).toBe('Wiadomość 10');
-        expect(messages[messages.length - 1].text).toBe('Wiadomość 1009');
-      }
+      // Wszystkie wiadomości powinny być przechowywane
+      // (usuwanie oparte na dacie, nie na liczbie)
+      expect(messages.length).toBe(100);
+      expect(messages[0].text).toBe('Wiadomość 0');
+      expect(messages[messages.length - 1].text).toBe('Wiadomość 99');
     });
   });
 });
