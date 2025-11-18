@@ -15,7 +15,7 @@ const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
 const { getUserById } = require('./lib/usersConfig');
-const { getAllMessages, addMessage } = require('./lib/messageRepository');
+const { getAllMessages, addMessage, addReaction } = require('./lib/messageRepository');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = '0.0.0.0'; // Nasłuchuj na wszystkich interfejsach (dostęp z sieci lokalnej)
@@ -117,7 +117,7 @@ app.prepare().then(() => {
     });
 
     /**
-     * Opcjonalnie: obsługa "użytkownik pisze"
+     * Obsługa "użytkownik pisze"
      */
     socket.on('chat:typing', (isTyping) => {
       const user = connectedUsers.get(socket.id);
@@ -127,6 +127,38 @@ app.prepare().then(() => {
           userName: user.userName,
           isTyping
         });
+      }
+    });
+
+    /**
+     * Obsługa reakcji na wiadomości
+     */
+    socket.on('message:reaction', (data) => {
+      const user = connectedUsers.get(socket.id);
+
+      if (!user) {
+        socket.emit('error', { message: 'Nie jesteś zalogowany' });
+        return;
+      }
+
+      try {
+        const reactions = addReaction(
+          data.messageId,
+          data.emoji,
+          data.userId
+        );
+
+        if (reactions) {
+          // Rozgłoś zaktualizowane reakcje do wszystkich
+          io.emit('message:reaction', {
+            messageId: data.messageId,
+            reactions
+          });
+
+          console.log(`👍 ${user.userName} reaguje ${data.emoji} na wiadomość`);
+        }
+      } catch (err) {
+        console.error('Błąd dodawania reakcji:', err);
       }
     });
 
