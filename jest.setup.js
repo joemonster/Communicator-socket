@@ -5,6 +5,11 @@
 
 import '@testing-library/jest-dom'
 
+// Mock dla uuid (moduł ESM)
+jest.mock('uuid', () => ({
+  v4: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9)
+}))
+
 // Mock dla Audio API (używany w powiadomieniach)
 global.Audio = jest.fn().mockImplementation(() => ({
   play: jest.fn().mockResolvedValue(undefined),
